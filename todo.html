@@ -153,7 +153,7 @@ kbd{background:var(--surface);border:1px solid var(--border);border-radius:4px;p
         <input type="text" id="sRepo" placeholder="todo-sync" autocomplete="off">
       </label>
       <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
-      <label>文件路径<input type="text" id="sPath" placeholder="todos.json" autocomplete="off"></label>
+      <label>文件路径<input type="text" id="sPath" placeholder="todo.json" autocomplete="off"></label>
     </div>
     <div class="sync-row">
       <label class="grow">Token（fine-grained，仅授权该仓库 contents 读写）
@@ -314,7 +314,7 @@ kbd{background:var(--surface);border:1px solid var(--border);border-radius:4px;p
       owner: $("sOwner").value.trim(),
       repo: $("sRepo").value.trim(),
       branch: $("sBranch").value.trim() || "main",
-      path: $("sPath").value.trim() || "todos.json",
+      path: $("sPath").value.trim() || "todo.json",
       token: $("sToken").value.trim()
     };
     if(!cfg.owner || !cfg.repo || !cfg.token){ errMsg("请先填写 仓库(owner/repo) 和 Token"); return null; }
@@ -341,7 +341,7 @@ kbd{background:var(--surface);border:1px solid var(--border);border-radius:4px;p
     var cfg = readCfg(); if(!cfg) return;
     setBusy(true);
     apiGetRaw(cfg).then(function(res){
-      if(res.notFound) throw new Error("远程还没有 todos.json，请先「更新到 GitHub」");
+      if(res.notFound) throw new Error("远程还没有 todo.json，请先「更新到 GitHub」");
       var txt = b64decode(res.json.content);
       var j = JSON.parse(txt);
       var arr = Array.isArray(j) ? j : j.todos;
