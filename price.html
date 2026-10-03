@@ -542,6 +542,7 @@ function b64decode(str){
 function jsonPathOf(cfg){
   var p=cfg.path.replace(/[\\/]+$/, "");
   if(/\.html?$/i.test(p)) return p.replace(/\.html?$/i, ".json");
+  if(/\.json$/i.test(p)) return p;  /* 路径本身就是 .json → 直接当数据文件用，不再另存副本 */
   return p.replace(/[\\/][^\\/]*$/, "") + "/data.json";
 }
 function msg(m,kind){ var e=document.getElementById("syncMsg"); if(!e) return; e.textContent=m; e.className="sync-msg"+(kind?" "+kind:""); }
@@ -551,7 +552,7 @@ function apiGetRaw(cfg,path){
   return fetch(url,{headers:ghHeaders(cfg.token)}).then(function(r){
     if(r.status===404) return {notFound:true};
     if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
-    return r.json().then(function(j){ return {json:j}; });
+    return r.json().then(function(j){ return Array.isArray(j) ? {isDir:true} : {json:j}; });
   });
 }
 function apiPut(cfg,content,sha,path){
@@ -564,26 +565,48 @@ function apiPut(cfg,content,sha,path){
     return r.json();
   });
 }
+function pushOne(cfg,f,retried){
+  return apiGetRaw(cfg, f.path).then(function(res){
+    if(res.isDir) throw new Error("远端 "+f.path+" 是个目录（仓库里存在同名文件夹），不能当文件写入：请在仓库里删掉该目录，或换一个文件路径");
+    var sha=(res && res.json) ? res.json.sha : null;
+    return apiPut(cfg, f.content, sha, f.path).catch(function(err){
+      var m=(err&&err.message)||"";
+      /* sha 过期或缺失时：重新取一次 sha 再试 */
+      if(!retried && /sha/i.test(m)){
+        return apiGetRaw(cfg, f.path).then(function(res2){
+          if(res2.isDir) throw err;
+          var sha2=(res2 && res2.json) ? res2.json.sha : null;
+          if(!sha2) throw err;
+          return apiPut(cfg, f.content, sha2, f.path);
+        });
+      }
+      throw err;
+    });
+  });
+}
 function pushSync(){
   var cfg=readCfg(); if(!cfg) return;
   var btn=document.getElementById("pushBtn"); btn.disabled=true; msg("同步中…","");
   var data=JSON.stringify(state);
   var html=PAGE_TEMPLATE.replace(/\/\*__EMBEDDED_DATA__\*\/[\s\S]*?\/\*__END_DATA__\*\//, "/*__EMBEDDED_DATA__*/ "+data+" /*__END_DATA__*/");
   var jp=jsonPathOf(cfg);
-  var files=[
-    { path:cfg.path, content:b64encode(html) },
-    { path:jp, content:b64encode(JSON.stringify(state,null,2)) }
-  ];
-  Promise.all(files.map(function(f){ return apiGetRaw(cfg, f.path); })).then(function(res){
-    return Promise.all(files.map(function(f,i){
-      var sha=(res[i] && res[i].json) ? res[i].json.sha : null;
-      return apiPut(cfg, f.content, sha, f.path).then(function(){ return f.path; });
-    }));
-  }).then(function(done){
-    msg("已更新到Github："+done.join(" + ")+"（"+state.categories.length+" 个分类 / "+state.products.length+" 个商品）","ok");
-  }).catch(function(err){
-    msg("推送失败："+(err&&err.message),"err");
-  }).then(function(){ btn.disabled=false; });
+  var files=[ { path:cfg.path, content:b64encode(html) } ];
+  if(jp!==cfg.path) files.push({ path:jp, content:b64encode(JSON.stringify(state,null,2)) });
+  /* 顺序逐个推：一个失败不影响另一个，最后汇总结果 */
+  var ok=[], bad=[];
+  function step(i){
+    if(i>=files.length){
+      if(bad.length) msg("部分成功：已更新 "+ok.join(" + ")+"；失败→ "+bad.join("；"),"err");
+      else msg("已更新到Github："+ok.join(" + ")+"（"+state.categories.length+" 个分类 / "+state.products.length+" 个商品）","ok");
+      btn.disabled=false; return;
+    }
+    pushOne(cfg,files[i],false).then(function(){
+      ok.push(files[i].path);
+    },function(e){
+      bad.push(files[i].path+": "+((e&&e.message)||e));
+    }).then(function(){ step(i+1); });
+  }
+  step(0);
 }
 /* 从一段 base64 内容里取出价格数据：先找内嵌标记，找不到返回 null */
 function extractRemote(b64){
@@ -633,6 +656,7 @@ function pullSync(){
     if(remote) return { remote:remote, from:cfg.path };
     // price.html 里没有内嵌数据（旧版文件）→ 回退到 plain 数据文件
     return apiGetRaw(cfg, jsonPathOf(cfg)).then(function(r2){
+      if(r2.isDir) throw new Error("远端 "+jsonPathOf(cfg)+" 是个目录而不是文件，请在仓库里删掉它");
       if(r2.notFound) throw new Error("远端没有内嵌数据，也找不到数据文件 "+jsonPathOf(cfg));
       var raw2=r2.json && r2.json.content;
       if(!raw2) throw new Error("远端数据文件是空的（检查 Token 权限）");
