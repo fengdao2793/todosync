@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="zh-CN" data-theme="light">
-<head>
+<html lang="zh-CN" data-theme="light"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>价格比对 · 小包</title>
@@ -131,11 +129,11 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
       <button id="exportBtn" title="导出为 JSON 备份">导出</button>
       <button id="importBtn" title="从 JSON 备份恢复">导入</button>
       <button id="syncBtn" title="GitHub 同步设置">同步</button>
-      <input type="file" id="importFile" accept="application/json,.json" hidden>
+      <input type="file" id="importFile" accept="application/json,.json" hidden="">
     </div>
   </header>
 
-  <div class="sync" id="syncPanel" hidden>
+  <div class="sync" id="syncPanel" hidden="">
     <div class="sync-head">
       <strong>GitHub 同步</strong>
       <span class="sync-tip">「更新到Github」= 把当前数据写进 price.html 上传，同时另存一份纯数据 price.json；「从Github更新」= 读回远端数据覆盖本地</span>
@@ -178,7 +176,7 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 
 <script>
 /* ====== 内嵌数据标记：同步时会把当前 state 替换进去 ====== */
-var EMBEDDED = /*__EMBEDDED_DATA__*/ null /*__END_DATA__*/;
+var EMBEDDED = /*__EMBEDDED_DATA__*/ {"categories":[],"products":[]} /*__END_DATA__*/;
 
 /* 页面初始 DOM 快照（同步上传用，含上面的内嵌标记） */
 var PAGE_TEMPLATE = document.documentElement.outerHTML;
@@ -665,6 +663,4 @@ document.getElementById("pullBtn").onclick=function(){ armPull(this, pullSync); 
 
 /* ---------- 启动 ---------- */
 render();
-</script>
-</body>
-</html>
+</script></body></html>
