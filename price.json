@@ -1,0 +1,41 @@
+{
+  "categories": [
+    {
+      "id": "musj5hxxa0lm4",
+      "name": "小米手机"
+    },
+    {
+      "id": "musj5tbnh96tp",
+      "name": "小米平板"
+    },
+    {
+      "id": "musj60q6dobzm",
+      "name": "空调"
+    },
+    {
+      "id": "musj63of0bfsy",
+      "name": "大米"
+    },
+    {
+      "id": "musj68two4424",
+      "name": "白酒"
+    }
+  ],
+  "products": [
+    {
+      "id": "musj7dk746kw8",
+      "catId": "musj5hxxa0lm4",
+      "name": "小米15 Ultra 16+1TB",
+      "regular": 5299,
+      "low": 4849,
+      "records": [
+        {
+          "date": "2026-10-03",
+          "shop": "小米京东自营旗舰店",
+          "price": 5299,
+          "note": "5799减国补500"
+        }
+      ]
+    }
+  ]
+}
