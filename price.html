@@ -175,11 +175,8 @@ footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-
 </div>
 
 <script>
-/* ====== 内嵌数据标记：同步时会把当前 state 替换进去 ====== */
-var EMBEDDED = /*__EMBEDDED_DATA__*/ {"categories":[{"id":"musj5hxxa0lm4","name":"小米手机"},{"id":"musj5tbnh96tp","name":"小米平板"},{"id":"musj60q6dobzm","name":"空调"},{"id":"musj63of0bfsy","name":"大米"},{"id":"musj68two4424","name":"白酒"}],"products":[{"id":"musj7dk746kw8","catId":"musj5hxxa0lm4","name":"小米15 Ultra 16+1TB","regular":5299,"low":4849,"records":[{"date":"2026-10-03","shop":"小米京东自营旗舰店","price":5299,"note":"5799减国补500"}]}]} /*__END_DATA__*/;
-
-/* 页面初始 DOM 快照（同步上传用，含上面的内嵌标记） */
-var PAGE_TEMPLATE = document.documentElement.outerHTML;
+/* 初始数据：默认空（todosync 风格，app 本身不带数据）；本机数据在 localStorage，跨设备用「从Github更新」拉取 price.json */
+var EMBEDDED = /*__EMBEDDED_DATA__*/ {"categories":[],"products":[]} /*__END_DATA__*/;
 
 var KEY = "price_tracker_v1";
 var KEY_SYNC = "price_sync_cfg";
