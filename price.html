@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>价格比对 · 小包</title>
+<style>
+:root{
+  --bg:#ffffff; --surface:#f6f8fa; --card:#ffffff; --border:#d0d7de; --soft:#eaeef2;
+  --text:#1f2328; --muted:#656d76; --accent:#0969da; --accent-soft:#ddf4ff;
+  --green:#1a7f37; --red:#cf222e; --orange:#9a6700; --purple:#8250df;
+  --shadow:0 1px 3px rgba(31,35,40,.08);
+}
+[data-theme="dark"]{
+  --bg:#0d1117; --surface:#161b22; --card:#0d1117; --border:#30363d; --soft:#21262d;
+  --text:#e6edf3; --muted:#8b949e; --accent:#58a6ff; --accent-soft:#121d2f;
+  --green:#3fb950; --red:#f85149; --orange:#d29922; --purple:#bc8cff;
+  --shadow:0 1px 3px rgba(1,4,9,.6);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;
+  transition:background .2s,color .2s;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:24px 20px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-size:20px;margin:0;font-weight:600}
+.sub{color:var(--muted);font-size:12px;margin-top:2px}
+.tools{display:flex;gap:8px;align-items:center}
+button,select,input,textarea{
+  font:inherit;color:var(--text);background:var(--card);
+  border:1px solid var(--border);border-radius:6px;padding:6px 10px;outline:none;
+}
+button{cursor:pointer;background:var(--surface)}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.primary:hover{filter:brightness(1.08)}
+button.danger{color:var(--red)}
+button.danger:hover{border-color:var(--red)}
+button:disabled{opacity:.5;cursor:default}
+button.armed{background:var(--red);border-color:var(--red);color:#fff}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* 同步面板（与 todo 一致：header 下方内嵌卡片） */
+.sync{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;box-shadow:var(--shadow);margin-bottom:14px}
+.sync-head{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.sync-tip{font-size:12px;color:var(--muted)}
+.sync-row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.sync-row label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.sync-row label.grow{flex:1;min-width:260px}
+.sync-row input[type=text],.sync-row input[type=password]{flex:1;min-width:120px}
+.sync-row .slash{color:var(--muted)}
+.sync-msg{font-size:12px;margin-left:auto}
+.sync-msg.ok{color:var(--green)}
+.sync-msg.err{color:var(--red)}
+
+/* 两栏布局：左分类 + 右内容 */
+.layout{display:flex;gap:16px;align-items:flex-start}
+.side{flex:0 0 200px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;box-shadow:var(--shadow);position:sticky;top:20px}
+.side h3{font-size:12px;color:var(--muted);margin:2px 4px 8px;font-weight:600}
+.cat{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:6px;cursor:pointer;margin-bottom:2px;font-size:13px;border:1px solid transparent}
+.cat:hover{background:var(--soft)}
+.cat.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.cat .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat .cnt{font-size:11px;color:var(--muted)}
+.cat .x{opacity:0;border:none;background:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
+.cat:hover .x{opacity:1}
+.addcat{margin-top:8px;width:100%}
+/* 页内表单（不依赖浏览器弹窗） */
+.pform{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.pform label{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}
+.pform input[type=text]{flex:1;min-width:120px;padding:5px 8px}
+.pform input[type=number]{width:96px;padding:5px 8px}
+.cat .x.armed{opacity:1;color:#fff;background:var(--red);border-radius:4px;padding:0 5px;line-height:18px}
+.main{flex:1;min-width:0}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.bar h2{font-size:17px;margin:0;flex:1}
+.bar .cnt{color:var(--muted);font-size:12px}
+
+/* 商品卡片 */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
+.chead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.chead h3{margin:0;font-size:15px;flex:1;word-break:break-word}
+.refline{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:4px 0 12px}
+.refline label{display:flex;align-items:center;gap:5px}
+.refline input{width:88px;padding:3px 6px}
+form.rec{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px}
+form.rec label{display:flex;flex-direction:column;font-size:11px;color:var(--muted);gap:3px}
+form.rec input{padding:5px 8px}
+form.rec input[type=number]{width:110px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 11px;min-width:92px}
+.stat .k{font-size:11px;color:var(--muted)}
+.stat .v{font-size:17px;font-weight:600}
+.stat .v.green{color:var(--green)} .stat .v.red{color:var(--red)}
+.advice{margin:6px 0 12px;padding:9px 12px;border-radius:8px;font-size:13px;border:1px solid var(--border)}
+.advice.buy{background:rgba(31,136,61,.12);border-color:var(--green);color:var(--green)}
+.advice.wait{background:rgba(207,34,46,.10);border-color:var(--red);color:var(--red)}
+.advice.ok{background:rgba(9,105,218,.10);border-color:var(--accent);color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td .del{color:var(--red);cursor:pointer;border:none;background:none;padding:0;font-size:13px}
+svg{max-width:100%;height:auto;display:block}
+.dotline{margin:8px 0;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.dotline .sw{width:22px;height:0;border-top:2px dashed;display:inline-block}
+
+.empty{text-align:center;color:var(--muted);padding:30px 0;border:1px dashed var(--border);border-radius:8px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;box-shadow:var(--shadow);font-size:13px;z-index:50;max-width:80%}
+.toast.err{color:var(--red);border-color:var(--red)}
+footer{margin-top:24px;color:var(--muted);font-size:12px;text-align:center;line-height:1.9}
+@media(max-width:720px){
+  .layout{flex-direction:column}
+  .side{position:static;flex:none;width:100%}
+  #catList{display:flex;flex-wrap:wrap;gap:4px}
+  .cat{margin-bottom:0}
+  .addcat{width:auto;margin-top:4px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>价格比对</h1>
+      <div class="sub">多分类比价追踪 · 数据保存在本机浏览器，不会上传</div>
+    </div>
+    <div class="tools">
+      <button id="themeBtn" title="切换亮色/暗色">暗色</button>
+      <button id="exportBtn" title="导出为 JSON 备份">导出</button>
+      <button id="importBtn" title="从 JSON 备份恢复">导入</button>
+      <button id="syncBtn" title="GitHub 同步设置">同步</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </header>
+
+  <div class="sync" id="syncPanel" hidden>
+    <div class="sync-head">
+      <strong>GitHub 同步</strong>
+      <span class="sync-tip">「更新到Github」= 把当前数据写进 price.html 上传，同时另存一份纯数据 price.json；「从Github更新」= 读回远端数据覆盖本地</span>
+    </div>
+    <div class="sync-row">
+      <label>仓库 owner/repo
+        <input type="text" id="sOwner" placeholder="yourname" autocomplete="off">
+        <span class="slash">/</span>
+        <input type="text" id="sRepo" placeholder="todosync" autocomplete="off">
+      </label>
+      <label>分支<input type="text" id="sBranch" placeholder="main" autocomplete="off"></label>
+      <label>文件路径<input type="text" id="sPath" placeholder="price.html" autocomplete="off"></label>
+    </div>
+    <div class="sync-row">
+      <label class="grow">Token（fine-grained，仅授权该仓库 contents 读写）
+        <input type="password" id="sToken" placeholder="github_pat_xxx" autocomplete="off">
+      </label>
+    </div>
+    <div class="sync-row">
+      <button id="saveSyncBtn">保存配置</button>
+      <button id="pullBtn">从Github更新</button>
+      <button class="primary" id="pushBtn">更新到Github</button>
+      <span id="syncMsg" class="sync-msg"></span>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="side">
+      <h3>分类</h3>
+      <div id="catList"></div>
+      <button class="addcat" id="addCatBtn">＋ 新建分类</button>
+    </aside>
+    <section class="main" id="main"></section>
+  </div>
+
+  <footer>
+    数据存于本机 localStorage（键名 price_tracker_v1）；跨设备用「更新到Github」上传 price.html，另一台设备打开后用「从Github更新」读回数据
+  </footer>
+</div>
+
+<script>
+/* ====== 内嵌数据标记：同步时会把当前 state 替换进去 ====== */
+var EMBEDDED = /*__EMBEDDED_DATA__*/ null /*__END_DATA__*/;
+
+/* 页面初始 DOM 快照（同步上传用，含上面的内嵌标记） */
+var PAGE_TEMPLATE = document.documentElement.outerHTML;
+
+var KEY = "price_tracker_v1";
+var KEY_SYNC = "price_sync_cfg";
+var THEME = "wb_price_theme";
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function todayStr(){
+  var d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function fmt(n){ return (Math.round(n*100)/100).toLocaleString("zh-CN"); }
+function esc(s){ return (s||"").replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+
+/* ---------- 读取 / 保存 ---------- */
+function load(){
+  try{ var raw=localStorage.getItem(KEY); if(!raw) return null; return JSON.parse(raw); }catch(e){ return null; }
+}
+function toast(m,err){
+  var d=document.createElement("div");
+  d.className="toast"+(err?" err":"");
+  d.textContent=m;
+  document.body.appendChild(d);
+  setTimeout(function(){ if(d.parentNode) d.parentNode.removeChild(d); }, 3200);
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){ toast("保存失败，可能存储已满或被禁用", true); } }
+
+var state = load();
+if(!state || !Array.isArray(state.categories) || !Array.isArray(state.products)){
+  if(EMBEDDED && EMBEDDED.categories && EMBEDDED.products){ state = EMBEDDED; }
+  else { state = {categories:[], products:[]}; }
+  save();
+}
+
+var activeCat = null;
+var pending = null;   // 'cat' | 'prod' —— 页内展开的表单，不使用浏览器弹窗
+
+/* ---------- 主题 ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute("data-theme", t);
+  document.getElementById("themeBtn").textContent = (t==="dark" ? "亮色" : "暗色");
+  try{ localStorage.setItem(THEME, t); }catch(e){}
+}
+applyTheme(localStorage.getItem(THEME)==="dark" ? "dark" : "light");
+document.getElementById("themeBtn").onclick=function(){
+  applyTheme(document.documentElement.getAttribute("data-theme")==="dark" ? "light" : "dark");
+};
+
+/* ---------- 渲染 ---------- */
+function render(){
+  renderSidebar();
+  renderMain();
+  bindPending();
+}
+function bindPending(){
+  function enter(node,fn){ if(!node) return; node.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); fn(); } else if(e.key==="Escape"){ pending=null; render(); } }); }
+  if(pending==="cat"){
+    var ci=document.getElementById("catName"); if(ci) ci.focus();
+    var ok=document.getElementById("catOk"), cc=document.getElementById("catCancel");
+    if(ok) ok.onclick=submitCat;
+    if(cc) cc.onclick=function(){ pending=null; render(); };
+    enter(ci,submitCat);
+  }
+  // 「＋ 添加商品」是 render 动态生成的，必须每次 render 后绑定（用 onclick 赋值，天然覆盖不重复）
+  var apb=document.getElementById("addProdBtn");
+  if(apb) apb.onclick=openProdForm;
+  if(pending==="prod"){
+    var pi=document.getElementById("prodName"); if(pi) pi.focus();
+    var po=document.getElementById("prodOk"), pc=document.getElementById("prodCancel");
+    if(po) po.onclick=submitProd;
+    if(pc) pc.onclick=function(){ pending=null; render(); };
+    enter(pi,submitProd);
+    ["prodReg","prodLow"].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); submitProd(); } }); });
+  }
+}
+function renderSidebar(){
+  var list=document.getElementById("catList");
+  list.innerHTML="";
+  if(!activeCat || !state.categories.find(function(c){return c.id===activeCat;})){
+    activeCat = state.categories.length ? state.categories[0].id : null;
+  }
+  state.categories.forEach(function(c){
+    var count = state.products.filter(function(p){return p.catId===c.id;}).length;
+    var el=document.createElement("div");
+    el.className="cat"+(c.id===activeCat?" on":"");
+    el.innerHTML='<span class="nm">'+esc(c.name)+'</span><span class="cnt">'+count+'</span><button class="x" title="删除分类（连带删除其下商品及价格）">×</button>';
+    el.addEventListener("click",function(e){ if(e.target.classList.contains("x")) return; activeCat=c.id; render(); });
+    el.querySelector(".x").addEventListener("click",function(e){ e.stopPropagation(); armDelete(this, delCat, c); });
+    list.appendChild(el);
+  });
+  if(pending==="cat"){
+    var row=document.createElement("div");
+    row.className="pform";
+    row.innerHTML='<input type="text" id="catName" placeholder="分类名称" maxlength="30" autocomplete="off">'+
+      '<button class="primary" id="catOk">确定</button><button id="catCancel">取消</button>';
+    list.appendChild(row);
+  }
+}
+function renderMain(){
+  var main=document.getElementById("main");
+  var cat=state.categories.find(function(c){return c.id===activeCat;});
+  if(!cat){ main.innerHTML='<div class="empty">还没有分类。点左侧「＋ 新建分类」创建一个（如：手机、笔记本…），再往里加要比对的商品。</div>'; return; }
+  var prods=state.products.filter(function(p){return p.catId===cat.id;});
+  main.innerHTML='<div class="bar"><h2>'+esc(cat.name)+'</h2><span class="cnt">'+prods.length+' 个商品</span><button class="primary" id="addProdBtn">＋ 添加商品</button></div>';
+  if(pending==="prod"){
+    var pf=document.createElement("div");
+    pf.className="pform";
+    pf.style.background="var(--surface)";
+    pf.style.border="1px solid var(--border)";
+    pf.style.borderRadius="8px";
+    pf.style.padding="10px";
+    pf.innerHTML='<label>商品名称<input type="text" id="prodName" placeholder="如：XX 1TB" maxlength="80" autocomplete="off"></label>'+
+      '<label>常卖价<input type="number" id="prodReg" min="0" step="0.1" placeholder="选填"></label>'+
+      '<label>历史低参考<input type="number" id="prodLow" min="0" step="0.1" placeholder="选填"></label>'+
+      '<button class="primary" id="prodOk">添加</button><button id="prodCancel">取消</button>';
+    main.appendChild(pf);
+  }
+  if(!prods.length){
+    var tip=document.createElement("div");
+    tip.className="empty";
+    tip.textContent="该分类下还没有商品。点「＋ 添加商品」加入要比对的对象（可加多个互相比价）。";
+    main.appendChild(tip);
+  }
+  prods.forEach(function(p){ main.appendChild(buildProductCard(p)); updateProduct(p); });
+}
+
+function buildProductCard(p){
+  var card=document.createElement("section");
+  card.className="card";
+  card.innerHTML=
+    '<div class="chead">'+
+      '<h3>'+esc(p.name)+'</h3>'+
+      '<button class="danger del-prod" data-id="'+p.id+'">删除商品</button>'+
+    '</div>'+
+    '<div class="refline">'+
+      '<label>常卖价基准 ¥<input type="number" class="reg" data-id="'+p.id+'" value="'+(p.regular||0)+'"></label>'+
+      '<label>历史低参考 ¥<input type="number" class="low" data-id="'+p.id+'" value="'+(p.low||0)+'"></label>'+
+    '</div>'+
+    '<form class="rec" data-id="'+p.id+'">'+
+      '<label>日期<input type="date" name="date" value="'+todayStr()+'" required></label>'+
+      '<label>渠道<input type="text" name="shop" placeholder="如 京东自营" required></label>'+
+      '<label>价格(¥)<input type="number" name="price" min="0" step="0.1" required></label>'+
+      '<label>备注<input type="text" name="note" placeholder="国补/促销…"></label>'+
+      '<button type="submit" class="primary">＋ 记录</button>'+
+    '</form>'+
+    '<div class="stats" id="stats-'+p.id+'"></div>'+
+    '<div class="advice" id="advice-'+p.id+'"></div>'+
+    '<div id="chart-'+p.id+'"></div>'+
+    '<div class="dotline"><span class="sw" style="border-color:var(--red)"></span>常卖价基准　<span class="sw" style="border-color:var(--green)"></span>历史低参考</div>'+
+    '<table><thead><tr><th>日期</th><th>渠道</th><th>价格</th><th>备注</th><th></th></tr></thead><tbody id="tbody-'+p.id+'"></tbody></table>';
+  card.querySelector("form.rec").addEventListener("submit",function(e){
+    e.preventDefault();
+    var el=e.target.elements;
+    var prod=state.products.find(function(x){return x.id===p.id;});
+    prod.records=prod.records||[];
+    prod.records.push({date:el.date.value, shop:el.shop.value.trim(), price:parseFloat(el.price.value), note:el.note.value.trim()});
+    save(); render();
+  });
+  card.querySelector(".reg").addEventListener("change",function(e){ var prod=state.products.find(function(x){return x.id===p.id;}); prod.regular=parseFloat(e.target.value)||0; save(); updateProduct(p); });
+  card.querySelector(".low").addEventListener("change",function(e){ var prod=state.products.find(function(x){return x.id===p.id;}); prod.low=parseFloat(e.target.value)||0; save(); updateProduct(p); });
+  card.querySelector(".del-prod").addEventListener("click",function(){ armDelete(this, delProduct, p); });
+  return card;   // 注意：先挂载到 DOM 再 updateProduct，否则内部按 id 找不到元素
+}
+
+function updateProduct(p){
+  var recs=(p.records||[]).slice().sort(function(a,b){return a.date.localeCompare(b.date);});
+  var stats=document.getElementById("stats-"+p.id);
+  var advice=document.getElementById("advice-"+p.id);
+  var tbody=document.getElementById("tbody-"+p.id);
+  if(recs.length){
+    var prices=recs.map(function(r){return r.price;});
+    var last=prices[prices.length-1], min=Math.min.apply(null,prices);
+    var avg=prices.reduce(function(a,b){return a+b;},0)/prices.length;
+    stats.innerHTML=
+      '<div class="stat"><div class="k">最近一次</div><div class="v">¥'+fmt(last)+'</div></div>'+
+      '<div class="stat"><div class="k">最低记录</div><div class="v green">¥'+fmt(min)+'</div></div>'+
+      '<div class="stat"><div class="k">平均</div><div class="v">¥'+fmt(Math.round(avg))+'</div></div>'+
+      '<div class="stat"><div class="k">记录数</div><div class="v">'+recs.length+'</div></div>';
+    var reg=p.regular||0, low=p.low||0;
+    if(low && last<=low){
+      advice.className="advice buy";
+      advice.textContent="✅ 当前 ¥"+fmt(last)+" 已≤历史低参考 ¥"+fmt(low)+"，是入手好时机。";
+    } else if(reg && last<=reg){
+      advice.className="advice ok";
+      advice.textContent="👍 当前 ¥"+fmt(last)+" 低于常卖价 ¥"+fmt(reg)+"（省 ¥"+fmt(reg-last)+"），可考虑入手。";
+    } else if(reg){
+      advice.className="advice wait";
+      advice.textContent="⏳ 当前 ¥"+fmt(last)+" 比常卖价 ¥"+fmt(reg)+" 高 ¥"+fmt(last-reg)+"，建议再等等。";
+    } else {
+      advice.className="advice ok";
+      advice.textContent="当前 ¥"+fmt(last)+"。设置「常卖价基准 / 历史低参考」后会给出入手建议。";
+    }
+  } else {
+    stats.innerHTML='<div class="stat"><div class="k">提示</div><div class="v">暂无记录</div></div>';
+    advice.className="advice ok";
+    advice.textContent="填入你看到的到手价即可开始追踪。可设置「常卖价基准 / 历史低参考」。";
+  }
+  tbody.innerHTML = recs.slice().reverse().map(function(r,i){
+    return '<tr><td>'+r.date+'</td><td>'+esc(r.shop)+'</td><td>¥'+fmt(r.price)+'</td><td>'+esc(r.note||"")+'</td>'+
+      '<td><button class="del" data-id="'+p.id+'" data-i="'+i+'">删</button></td></tr>';
+  }).join("");
+  tbody.querySelectorAll(".del").forEach(function(b){
+    b.addEventListener("click",function(){
+      var prod=state.products.find(function(x){return x.id===b.dataset.id;});
+      var idx=recs.length-1-parseInt(b.dataset.i);
+      prod.records.splice(idx,1); save(); render();
+    });
+  });
+  drawChart(p.id, recs, p);
+}
+
+function drawChart(id, recs, p){
+  var box=document.getElementById("chart-"+id);
+  if(recs.length<1){ box.innerHTML=""; return; }
+  var W=520,H=220,pad={l:48,r:14,t:14,b:28};
+  var all=recs.map(function(r){return r.price;});
+  if(p.regular) all.push(p.regular);
+  if(p.low) all.push(p.low);
+  var mn=Math.min.apply(null,all), mx=Math.max.apply(null,all);
+  var padY=(mx-mn)*0.12||100; mn-=padY; mx+=padY;
+  function x(i){ return pad.l + (recs.length===1? (W-pad.l-pad.r)/2 : i*(W-pad.l-pad.r)/(recs.length-1)); }
+  function y(v){ return pad.t + (1-(v-mn)/(mx-mn))*(H-pad.t-pad.b); }
+  var svg='<svg viewBox="0 0 '+W+' '+H+'" role="img">';
+  for(var g=0;g<=4;g++){
+    var v=mn+(mx-mn)*g/4, yy=y(v);
+    svg+='<line x1="'+pad.l+'" y1="'+yy+'" x2="'+(W-pad.r)+'" y2="'+yy+'" stroke="var(--border)" stroke-width="1"/>';
+    svg+='<text x="'+(pad.l-6)+'" y="'+(yy+3)+'" font-size="9" fill="var(--muted)" text-anchor="end">'+fmt(Math.round(v))+'</text>';
+  }
+  if(p.regular){
+    svg+='<line x1="'+pad.l+'" y1="'+y(p.regular)+'" x2="'+(W-pad.r)+'" y2="'+y(p.regular)+'" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="5 4"/>';
+    svg+='<text x="'+(W-pad.r)+'" y="'+(y(p.regular)-4)+'" font-size="9" fill="var(--red)" text-anchor="end">常卖 '+fmt(p.regular)+'</text>';
+  }
+  if(p.low){
+    svg+='<line x1="'+pad.l+'" y1="'+y(p.low)+'" x2="'+(W-pad.r)+'" y2="'+y(p.low)+'" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="5 4"/>';
+    svg+='<text x="'+(W-pad.r)+'" y="'+(y(p.low)+11)+'" font-size="9" fill="var(--green)" text-anchor="end">低参考 '+fmt(p.low)+'</text>';
+  }
+  var pts=recs.map(function(r,i){return x(i)+","+y(r.price);}).join(" ");
+  svg+='<polyline points="'+pts+'" fill="none" stroke="var(--accent)" stroke-width="2"/>';
+  recs.forEach(function(r,i){
+    svg+='<circle cx="'+x(i)+'" cy="'+y(r.price)+'" r="3.5" fill="var(--accent)"/>';
+    svg+='<text x="'+x(i)+'" y="'+(H-pad.b+14)+'" font-size="8.5" fill="var(--muted)" text-anchor="middle">'+r.date.slice(5)+'</text>';
+    svg+='<text x="'+x(i)+'" y="'+(y(r.price)-7)+'" font-size="9" fill="var(--text)" text-anchor="middle">'+fmt(r.price)+'</text>';
+  });
+  svg+="</svg>";
+  box.innerHTML=svg;
+}
+
+/* ---------- 分类 / 商品 操作（页内表单，不使用 prompt / confirm） ---------- */
+function armDelete(btn, fn, payload){
+  if(btn.getAttribute("data-armed")==="1"){
+    btn.removeAttribute("data-armed"); btn.textContent=btn.getAttribute("data-old")||"删除";
+    fn(payload); return;
+  }
+  btn.setAttribute("data-old", btn.textContent);
+  btn.setAttribute("data-armed","1");
+  btn.textContent = payload && payload.name ? ("确认删除「"+payload.name+"」") : "确认删除？";
+  btn.classList.add("armed");
+  if(btn._t) clearTimeout(btn._t);
+  btn._t=setTimeout(function(){
+    btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+    btn.textContent=btn.getAttribute("data-old")||"删除";
+  }, 5000);
+}
+
+document.getElementById("addCatBtn").onclick=function(){
+  pending = (pending==="cat") ? null : "cat"; render();
+};
+function submitCat(){
+  var inp=document.getElementById("catName");
+  var name=inp ? inp.value.trim() : "";
+  if(!name){ if(inp) inp.focus(); return; }
+  var c={id:uid(), name:name};
+  state.categories.push(c); activeCat=c.id; pending=null; save(); render();
+}
+
+function openProdForm(){
+  pending = (pending==="prod") ? null : "prod"; render();
+}
+function submitProd(){
+  var name=document.getElementById("prodName").value.trim();
+  if(!name){ document.getElementById("prodName").focus(); return; }
+  var reg=parseFloat(document.getElementById("prodReg").value)||0;
+  var low=parseFloat(document.getElementById("prodLow").value)||0;
+  state.products.push({id:uid(), catId:activeCat, name:name, regular:reg, low:low, records:[]});
+  pending=null; save(); render();
+}
+
+function delCat(c){
+  var n=state.products.filter(function(p){return p.catId===c.id;}).length;
+  state.products=state.products.filter(function(p){return p.catId!==c.id;});
+  state.categories=state.categories.filter(function(x){return x.id!==c.id;});
+  if(activeCat===c.id) activeCat=null;
+  pending=null; save(); render();
+}
+function delProduct(p){
+  state.products=state.products.filter(function(x){return x.id!==p.id;});
+  pending=null; save(); render();
+}
+
+/* ---------- 导出 / 导入 ---------- */
+document.getElementById("exportBtn").onclick=function(){
+  var blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="price-data-"+todayStr()+".json"; a.click();
+};
+document.getElementById("importBtn").onclick=function(){ document.getElementById("importFile").click(); };
+document.getElementById("importFile").onchange=function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var d=JSON.parse(r.result);
+      if(!d.categories||!d.products) throw new Error("格式不对");
+      state=d; activeCat=null; save(); render();
+    }catch(err){ toast("JSON 解析失败："+err.message, true); }
+  };
+  r.readAsText(f);
+  e.target.value="";
+};
+
+/* ---------- GitHub 同步（推送内嵌数据的 price.html） ---------- */
+function b64encode(str){ return btoa(unescape(encodeURIComponent(str))); }
+function ghHeaders(token,put){
+  var h={ "Accept":"application/vnd.github+json", "Authorization":"Bearer "+token, "X-GitHub-Api-Version":"2022-11-28" };
+  if(put) h["Content-Type"]="application/json";
+  return h;
+}
+function saveCfg(cfg){ try{ localStorage.setItem(KEY_SYNC, JSON.stringify(cfg)); }catch(e){} }
+function fillCfg(){
+  var c=null;
+  try{ c=JSON.parse(localStorage.getItem(KEY_SYNC)); }catch(e){}
+  /* 没有保存过的配置时，先给一份默认值（只含公开信息，Token 永远要你自己填） */
+  if(!c) c={ owner:"fengdao2793", repo:"todosync", branch:"main", path:"price.html" };
+  if(c.owner) document.getElementById("sOwner").value=c.owner;
+  if(c.repo) document.getElementById("sRepo").value=c.repo;
+  if(c.branch) document.getElementById("sBranch").value=c.branch;
+  if(c.path) document.getElementById("sPath").value=c.path;
+  if(c.token) document.getElementById("sToken").value=c.token;
+}
+function readCfg(needToken){
+  var cfg={
+    owner:document.getElementById("sOwner").value.trim(),
+    repo:document.getElementById("sRepo").value.trim(),
+    branch:document.getElementById("sBranch").value.trim()||"main",
+    path:document.getElementById("sPath").value.trim()||"price.html",
+    token:document.getElementById("sToken").value.trim()
+  };
+  if(!cfg.owner||!cfg.repo){ msg("请先填写 owner / repo","err"); return null; }
+  if(needToken && !cfg.token){ msg("请填写 Token（读取私有仓库需要授权）","err"); return null; }
+  if(cfg.token) saveCfg(cfg);
+  return cfg;
+}
+function b64decode(str){
+  var bin=atob(String(str).replace(/\s+/g,""));
+  var bytes=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+  if(typeof TextDecoder!=="undefined") return new TextDecoder("utf-8").decode(bytes);
+  return decodeURIComponent(escape(bin));
+}
+/* 数据文件名：price.html → price.json（像 todos.json 那样另存一份纯数据，方便随时查看/回退） */
+function jsonPathOf(cfg){
+  var p=cfg.path.replace(/[\\/]+$/, "");
+  if(/\.html?$/i.test(p)) return p.replace(/\.html?$/i, ".json");
+  return p.replace(/[\\/][^\\/]*$/, "") + "/data.json";
+}
+function msg(m,kind){ var e=document.getElementById("syncMsg"); if(!e) return; e.textContent=m; e.className="sync-msg"+(kind?" "+kind:""); }
+function apiGetRaw(cfg,path){
+  var p=(path||cfg.path).split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p+"?ref="+encodeURIComponent(cfg.branch);
+  return fetch(url,{headers:ghHeaders(cfg.token)}).then(function(r){
+    if(r.status===404) return {notFound:true};
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json().then(function(j){ return {json:j}; });
+  });
+}
+function apiPut(cfg,content,sha,path){
+  var p=(path||cfg.path).split("/").map(encodeURIComponent).join("/");
+  var url="https://api.github.com/repos/"+encodeURIComponent(cfg.owner)+"/"+encodeURIComponent(cfg.repo)+"/contents/"+p;
+  var body={ message:"price sync "+new Date().toISOString(), content:content, branch:cfg.branch };
+  if(sha) body.sha=sha;
+  return fetch(url,{method:"PUT",headers:ghHeaders(cfg.token,true),body:JSON.stringify(body)}).then(function(r){
+    if(!r.ok) return r.json().then(function(j){ throw new Error(j.message||("HTTP "+r.status)); });
+    return r.json();
+  });
+}
+function pushSync(){
+  var cfg=readCfg(); if(!cfg) return;
+  var btn=document.getElementById("pushBtn"); btn.disabled=true; msg("同步中…","");
+  var data=JSON.stringify(state);
+  var html=PAGE_TEMPLATE.replace(/\/\*__EMBEDDED_DATA__\*\/[\s\S]*?\/\*__END_DATA__\*\//, "/*__EMBEDDED_DATA__*/ "+data+" /*__END_DATA__*/");
+  var jp=jsonPathOf(cfg);
+  var files=[
+    { path:cfg.path, content:b64encode(html) },
+    { path:jp, content:b64encode(JSON.stringify(state,null,2)) }
+  ];
+  Promise.all(files.map(function(f){ return apiGetRaw(cfg, f.path); })).then(function(res){
+    return Promise.all(files.map(function(f,i){
+      var sha=(res[i] && res[i].json) ? res[i].json.sha : null;
+      return apiPut(cfg, f.content, sha, f.path).then(function(){ return f.path; });
+    }));
+  }).then(function(done){
+    msg("已更新到Github："+done.join(" + ")+"（"+state.categories.length+" 个分类 / "+state.products.length+" 个商品）","ok");
+  }).catch(function(err){
+    msg("推送失败："+(err&&err.message),"err");
+  }).then(function(){ btn.disabled=false; });
+}
+/* 从一段 base64 内容里取出价格数据：先找内嵌标记，找不到返回 null */
+function extractRemote(b64){
+  var html;
+  try{ html=b64decode(b64); }catch(e){ throw new Error("远端文件解码失败"); }
+  var m=html.match(/\/\*__EMBEDDED_DATA__\*\/([\s\S]*?)\/\*__END_DATA__\*\//);
+  if(!m || !m[1].trim()) return null;
+  try{ return JSON.parse(m[1].trim()); }catch(e){ throw new Error("远端内嵌数据解析失败"); }
+}
+
+/* 从 Github 更新：读回远端 price.html 内嵌的数据（或数据文件），覆盖本地 */
+function armPull(btn, fn){
+  if(btn.getAttribute("data-armed")==="1"){
+    btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+    btn.textContent="从Github更新";
+    fn(); return;
+  }
+  btn.setAttribute("data-old", btn.textContent);
+  btn.setAttribute("data-armed","1");
+  btn.textContent="确认覆盖本地？";
+  btn.classList.add("armed");
+  if(btn._t) clearTimeout(btn._t);
+  btn._t=setTimeout(function(){
+    btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+    btn.textContent=btn.getAttribute("data-old")||"从Github更新";
+  },5000);
+}
+function applyRemote(remote){
+  if(!remote || !Array.isArray(remote.categories) || !Array.isArray(remote.products)) throw new Error("远端数据结构无法识别");
+  try{ localStorage.setItem(KEY+"_bak", JSON.stringify(state)); }catch(e){}  /* 覆盖前先备份旧数据 */
+  state={ categories:remote.categories, products:remote.products };
+  activeCat=null; pending=null;
+  save(); render();
+  return state.categories.length;
+}
+function pullSync(){
+  var cfg=readCfg(true); if(!cfg) return;
+  var btn=document.getElementById("pullBtn");
+  if(btn._t) clearTimeout(btn._t);
+  btn.removeAttribute("data-armed"); btn.classList.remove("armed");
+  btn.disabled=true; btn.textContent="读取中…"; msg("读取中…","");
+  apiGetRaw(cfg, cfg.path).then(function(res){
+    if(res.notFound) throw new Error("远端 price.html 不存在（检查 owner / repo / 分支 / 路径）");
+    var raw=res.json && res.json.content;
+    if(!raw) throw new Error("接口没返回文件内容（检查 Token 权限与仓库可见性）");
+    var remote=extractRemote(raw);
+    if(remote) return { remote:remote, from:cfg.path };
+    // price.html 里没有内嵌数据（旧版文件）→ 回退到 plain 数据文件
+    return apiGetRaw(cfg, jsonPathOf(cfg)).then(function(r2){
+      if(r2.notFound) throw new Error("远端没有内嵌数据，也找不到数据文件 "+jsonPathOf(cfg));
+      var raw2=r2.json && r2.json.content;
+      if(!raw2) throw new Error("远端数据文件是空的（检查 Token 权限）");
+      var text2;
+      try{ text2=b64decode(raw2); }catch(e){ throw new Error("远端数据文件解码失败"); }
+      var remote2=null;
+      try{ remote2=JSON.parse(text2); }catch(e){ remote2=extractRemote(raw2); }  /* 数据文件是纯 JSON；万一里面也带内嵌标记则走 extractRemote */
+      if(!remote2) throw new Error("远端数据文件内容无法解析");
+      return { remote:remote2, from:jsonPathOf(cfg) };
+    });
+  }).then(function(o){
+    var n=applyRemote(o.remote);
+    msg("已从Github更新（来自 "+o.from+"："+n+" 个分类 / "+state.products.length+" 个商品；旧数据已备份）","ok");
+  }).catch(function(err){
+    msg("更新失败："+((err&&err.message)||err),"err");
+  }).then(function(){
+    btn.disabled=false; btn.textContent="从Github更新";
+  });
+}
+document.getElementById("syncBtn").onclick=function(){
+  var p=document.getElementById("syncPanel");
+  if(p.hidden){ fillCfg(); p.hidden=false; }
+  else p.hidden=true;
+};
+document.getElementById("saveSyncBtn").onclick=function(){ var c=readCfg(); if(c) msg("配置已保存（下次自动填充）","ok"); };
+document.getElementById("pushBtn").onclick=pushSync;
+document.getElementById("pullBtn").onclick=function(){ armPull(this, pullSync); };
+
+/* ---------- 启动 ---------- */
+render();
+</script>
+</body>
+</html>
