@@ -583,7 +583,8 @@ function pushSync(){
   var ok=[], bad=[];
   function step(i){
     if(i>=files.length){
-      if(bad.length) msg("部分成功：失败→ "+bad.join("；"),"err");
+      if(ok.length && bad.length) msg("部分成功：已更新 "+ok.join(" + ")+"；失败→ "+bad.join("；"),"err");
+      else if(bad.length) msg("同步失败："+bad.join("；"),"err");
       else msg("已更新到Github："+ok.join(" + ")+"（"+state.categories.length+" 个分类 / "+state.products.length+" 个商品）","ok");
       btn.disabled=false; return;
     }
