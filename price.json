@@ -1,4 +1,29 @@
 {
-  "categories": [],
-  "products": []
+  "categories": [
+    {
+      "id": "mvdxgk8z2cu2v",
+      "name": "手机"
+    },
+    {
+      "id": "mvdxgoek75n6d",
+      "name": "Pad"
+    }
+  ],
+  "products": [
+    {
+      "id": "mvdxhx46agssn",
+      "catId": "mvdxgoek75n6d",
+      "name": "Pad 7 Ultra(16+1TB）",
+      "regular": 0,
+      "low": 5579,
+      "records": [
+        {
+          "date": "2026-10-18",
+          "shop": "小米京东自营旗舰店",
+          "price": 5615.1,
+          "note": "6799-550-623.9"
+        }
+      ]
+    }
+  ]
 }
